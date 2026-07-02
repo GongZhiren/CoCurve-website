@@ -1,0 +1,166 @@
+WEBVTT
+
+1
+00:00:00.600 --> 00:00:11.880
+Let's understand CoCurve — a way to compress large language models by pruning them smarter, with no fine-tuning at all. We'll build it up from scratch, assuming no background.
+
+2
+00:00:12.220 --> 00:00:20.044
+The whole idea is one shift in perspective: stop ranking parts one by one, and start looking at the connections between them.
+
+3
+00:00:20.794 --> 00:00:30.130
+First, the goal. A large language model is built from many small parts — attention heads and feed-forward channel groups — stacked in layers.
+
+4
+00:00:30.470 --> 00:00:41.438
+Structured pruning makes the model smaller and faster by deleting whole parts. Training-free means we do it with just a little calibration text — no retraining.
+
+5
+00:00:41.778 --> 00:00:51.882
+Because we remove whole heads and whole channel groups — not scattered individual weights — the model actually runs faster and lighter on real hardware.
+
+6
+00:00:52.222 --> 00:01:00.502
+We measure damage simply: how far do the pruned model's predictions drift from the original? Remove the parts you can drop with the least drift.
+
+7
+00:01:01.252 --> 00:01:08.188
+So which parts do we remove? Almost every method gives each part an importance score — on its own.
+
+8
+00:01:08.528 --> 00:01:16.808
+Then it assumes the total damage of removing a whole set is just the sum of the individual scores. Add them up, cut the cheapest.
+
+9
+00:01:17.148 --> 00:01:20.508
+It's a clean recipe. And it hides a wrong assumption.
+
+10
+00:01:21.258 --> 00:01:32.586
+Here's the problem. A Transformer is not a bag of independent parts. Every layer reads from and writes to one shared workspace — the residual stream.
+
+11
+00:01:32.926 --> 00:01:40.942
+So removing two parts together is not the same as removing each alone. They interact through that shared stream.
+
+12
+00:01:41.282 --> 00:01:50.690
+Two parts that each look important might be doing the same job — partly redundant. And two parts that each look weak might only work as a pair.
+
+13
+00:01:51.440 --> 00:01:59.792
+Those pairs are the trap. Call them bridge units: individually low-scoring, but highly connected to the parts that depend on them.
+
+14
+00:02:00.132 --> 00:02:11.628
+A method that scores each part alone will happily delete a bridge unit — right alongside the very units it was holding up. The damage isn't additive; it's joint.
+
+15
+00:02:11.968 --> 00:02:21.256
+And you can't fix this by correlating activations — that signal is dominated by raw scale and disconnected from what the model actually outputs.
+
+16
+00:02:22.006 --> 00:02:30.046
+CoCurve fixes it at the source. Start from that same measure of drift — the divergence between the model and its pruned copy.
+
+17
+00:02:30.386 --> 00:02:40.370
+At zero pruning there is no drift and no slope, so the leading behavior is pure curvature — a single matrix that captures how damage grows.
+
+18
+00:02:40.710 --> 00:02:49.854
+And this one matrix has two readings. Its diagonal is exactly the classical importance score — how much each part matters on its own.
+
+19
+00:02:50.194 --> 00:02:58.762
+Its off-diagonal entries are something new: co-pruning curvature edges — the extra damage from removing two parts together.
+
+20
+00:02:59.102 --> 00:03:15.446
+Positive means the pair is jointly harmful to cut; negative means they cancel; zero means independent. And on real models, around 98 percent of the mass lives in these edges — not the diagonal everyone scores.
+
+21
+00:03:16.196 --> 00:03:22.412
+But measuring every pair sounds impossibly expensive — there are millions of them.
+
+22
+00:03:22.752 --> 00:03:33.360
+Here's the key result. In the right geometry, the entire edge matrix is a Gram product — a table of dot products — of single-part measurements.
+
+23
+00:03:33.700 --> 00:03:46.036
+So you only need to test each part once, on its own. From those single-part ablations, the whole web of edges falls out — with no pairwise sweeps, no gradients, and no labels.
+
+24
+00:03:46.376 --> 00:03:53.648
+It's the same information a full pairwise analysis would give you — at the cost of the cheapest possible experiment.
+
+25
+00:03:54.398 --> 00:04:05.558
+With the full matrix in hand, CoCurve prunes in a single shot. A greedy solver removes parts under one shared budget across attention and feed-forward together.
+
+26
+00:04:05.898 --> 00:04:15.594
+Because attention and FFN compete in the same budget, the method decides on its own how much to take from each — no hand-set ratios.
+
+27
+00:04:15.934 --> 00:04:26.518
+And a single dial, chosen from calibration alone, sets how much to trust the edges — from pure node saliency, up to the full edge model.
+
+28
+00:04:27.268 --> 00:04:38.164
+So does it work? On an instruction-tuned Llama-3.1-8B, at 20 percent pruning, here is how much of the original capability survives.
+
+29
+00:04:38.504 --> 00:04:51.152
+Language modeling, commonsense, knowledge — CoCurve leads the strongest baseline on all of them. It is the only training-free method strong across every capability class.
+
+30
+00:04:51.492 --> 00:05:03.132
+The clearest win is code. Code generation is fragile — most pruning methods wipe it out. CoCurve keeps 16 percent of it, against 11 for the best baseline.
+
+31
+00:05:03.472 --> 00:05:15.688
+And it is not one model. CoCurve gives the lowest perplexity on every model we tested — up to about fourteen times lower than the best baseline on a 24-billion-parameter model.
+
+32
+00:05:16.438 --> 00:05:26.350
+And we can prove it's the edges doing the work. Turn them off — keep only the diagonal, the classical score — and perplexity jumps to about 13.
+
+33
+00:05:26.690 --> 00:05:35.906
+Turn the edges back on, and it drops to 8, cutting the gap to the original model roughly in half. Code recovers about twenty-fold.
+
+34
+00:05:36.246 --> 00:05:49.110
+Even sharper: keep only the edges within a module, and you do worse than the diagonal alone. It is specifically the attention-to-feed-forward edges — the cross-module ones — that carry the model.
+
+35
+00:05:49.860 --> 00:06:03.684
+CoCurve even tells you in advance when the edges will help. The benefit grows when a model's feed-forward channels are less redundant — a number you read straight off the calibration matrix, before any benchmark.
+
+36
+00:06:04.024 --> 00:06:15.424
+So on low-redundancy models it leans fully on the edges; on redundant ones it damps back to a strong classical score. It never bets on edges where they won't pay off.
+
+37
+00:06:15.764 --> 00:06:26.972
+It's honest about limits, too. Like all training-free pruning, it targets moderate compression — past about thirty percent, everything collapses without a recovery stage.
+
+38
+00:06:27.722 --> 00:06:37.322
+So the takeaway is a change of unit. Importance is not a property of a part in isolation — it lives in the connections between parts.
+
+39
+00:06:37.662 --> 00:06:45.414
+The thing almost everyone scores — the diagonal — is a few percent of what matters. The rest is in the edges.
+
+40
+00:06:45.754 --> 00:06:55.138
+CoCurve reads both from a single matrix, recovers the edges cheaply, and prunes them together. Prune the edges — not just the nodes.
+
+41
+00:06:55.478 --> 00:07:03.398
+The project page, this tutorial, and the code and paper — coming soon — are linked on screen. Thanks for watching.
+
