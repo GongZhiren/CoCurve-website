@@ -20,9 +20,10 @@
       </a>
       <nav>
         <a href="#abstract">Abstract</a>
-        <a href="#problem">Problem</a>
         <a href="#method">Method</a>
         <a href="#results">Results</a>
+        <a href="#recovery">Recovery</a>
+        <a href="#vlm">VLMs</a>
         <a href="#analysis">Analysis</a>
         <a href="#efficiency">Efficiency</a>
         <a href="tutorial.html">Tutorial</a>
@@ -91,16 +92,19 @@
           <strong>jointly indispensable</strong>, and two salient ones partly redundant.
         </p>
         <p>
-          <strong>CoCurve</strong> (Cross-Module Co-Pruning Curvature) prunes attention and FFN units jointly. From the
-          token-level KL divergence between the frozen model and its masked copy, a second-order Taylor expansion yields a
-          single Fisher matrix: its <strong>diagonal</strong> is classical node saliency, while its <strong>off-diagonal</strong>
-          entries are <strong>co-pruning curvature edges</strong> — the extra damage from removing two units together.
+          <strong>CoCurve</strong> (Cross-Module Co-Pruning Curvature) casts structured pruning as
+          <strong>set-dependent predictive risk</strong> over a unified inventory of attention heads and FFN groups.
+          A second-order Taylor expansion of the token-level KL yields a single Fisher matrix: its <strong>diagonal</strong>
+          is classical node saliency, while its <strong>off-diagonal</strong> entries are <strong>co-pruning curvature
+          edges</strong> — the extra damage from removing two units together, conditioning each decision on the units
+          already removed.
         </p>
         <p>
-          We prove this entire edge matrix is a <strong>Gram product of single-unit ablations</strong>, recovering it from
-          just <em>M</em> ablations with no pairwise sweeps, gradients, or labels — then prune in one shot under a shared
-          budget. CoCurve reframes structured pruning from <em>ranking nodes</em> to <em>preserving the curvature of the
-          edges between them</em>.
+          We prove this entire edge matrix is a <strong>Gram product of single-unit ablations</strong>, recovering it
+          from just <em>M</em> ablations with no pairwise sweeps, gradients, or labels — then prune in one shot under a
+          shared budget. Across 6 LLMs (3B–70B) and 3 VLMs, over 3 perplexity corpora, 12 language tasks and 7
+          multimodal benchmarks, CoCurve <strong>ranks first in 53/60 corpus comparisons</strong> and moves the
+          quality–deployment frontier.
         </p>
       </article>
     </section>
@@ -113,25 +117,29 @@
           <p>
             The standard recipe gives every unit an importance score and assumes set damage is additive:
             <span class="mono">ΔL(S) ≈ Σ ΔL(u)</span>. But a Transformer is a <strong>coupled system</strong> — every
-            sublayer reads and writes one shared residual stream. Pruning a set is a joint operation, not a sum.
-          </p>
-          <h3>Bridge units get co-pruned</h3>
-          <p>
-            The consequence: a node-first ranker inevitably co-prunes a low-saliency <strong>bridge</strong> unit together
-            with the very units that depend on it. Two weak-looking units can be <strong>jointly indispensable</strong>;
-            two salient ones can be partly <strong>redundant</strong>. And activation correlation doesn't fix it — it is
-            dominated by scale and disconnected from the output distribution.
+            sublayer reads and writes one shared residual stream, so pruning effects <strong>reinforce or cancel</strong>.
+            Pruning a set is a joint operation, not a sum.
           </p>
         </article>
-        <figure class="card figure-card">
-          <img class="pipeline-hero-img" src="./assets/fig_bridge.png" alt="Bridge units: low saliency, high connectivity" data-full="./assets/fig_bridge.png" loading="lazy">
-          <figcaption>Figure. Bridge units (87 of 768 on Llama-3.1-8B) — low individual saliency but high edge connectivity — exactly what a node-only score wrongly deletes.</figcaption>
-        </figure>
+        <article class="card">
+          <h3>Bridge units get co-pruned</h3>
+          <p>
+            The consequence: a node-first ranker inevitably co-prunes a low-saliency <strong>bridge</strong> unit
+            (87 of 768 on Llama-3.1-8B; 3.5–14.5% across ten models) together with the units that depend on it.
+            Two weak-looking units can be <strong>jointly indispensable</strong>; two salient ones partly
+            <strong>redundant</strong>. Modeling the interactions is what unlocks further progress along the frontier.
+          </p>
+        </article>
       </div>
     </section>
 
     <section id="method" class="container section">
       <h2>Method</h2>
+      <figure class="card figure-card">
+        <img src="./assets/fig_overview.png" alt="CoCurve overview: single-unit probing, co-pruning matrix H, H-conditioned pruning" data-full="./assets/fig_overview.png" loading="lazy">
+        <figcaption>Figure. CoCurve, end to end — probe each unit once (single-unit responses), assemble the co-pruning matrix <span class="mono">H</span> (diagonal saliency + off-diagonal edges), then prune conditioned on <span class="mono">H</span>.</figcaption>
+      </figure>
+
       <article class="card">
         <h3>One Fisher matrix, read two ways</h3>
         <p>
@@ -145,7 +153,7 @@
             <ul>
               <li><span class="mono">H_uu</span> is exactly classical single-unit importance — a structured Optimal Brain Damage.</li>
               <li>Non-negative by construction: a built-in correctness check on the estimate.</li>
-              <li>Yet on real models it is only a <strong>few percent</strong> of the total curvature mass.</li>
+              <li>Yet on real models the diagonal alone misses the decisive coupling.</li>
             </ul>
           </div>
           <div>
@@ -162,7 +170,7 @@
           <li>In the Fisher metric, <span class="mono">H = (1/P)·D̄ᵀD̄</span> is a <strong>Gram product</strong> of single-unit ablation features.</li>
           <li>So the full <span class="mono">M×M</span> edge matrix comes from <strong>M single-unit ablations</strong> — no O(M²) pairwise sweeps, no gradients, no labels.</li>
           <li>A one-shot <strong>O(MK)</strong> cost-normalized greedy solves a shared attention+FFN budget, so per-type ratios emerge from the objective.</li>
-          <li>A calibration-selected <strong>λ ∈ [0,1]</strong> traces a positive-semidefinite path from diagonal-only (λ=0, an OBD floor) to the full co-pruning graph (λ=1); every intermediate matrix stays PSD, so λ indexes candidate masks rather than interaction magnitude.</li>
+          <li>A calibration-selected <strong>λ ∈ [0,1]</strong> traces a positive-semidefinite path from diagonal-only (λ=0, an OBD floor) to the full co-pruning graph (λ=1); λ indexes candidate masks, and every intermediate matrix stays PSD.</li>
         </ul>
       </article>
 
@@ -180,18 +188,18 @@
         <article class="card">
           <h3>Step 3 · Prune once</h3>
           <p>Cost-normalized greedy under a shared budget, λ selected from calibration risk; physically remove units.</p>
-          <p class="note">Result: a jointly-pruned subnetwork — physical slicing is bit-identical to masking.</p>
+          <p class="note">Result: a jointly-pruned subnetwork — slicing is bit-identical to masking.</p>
         </article>
       </div>
 
       <div class="grid2">
         <figure class="card figure-card">
-          <img src="./assets/fig_Hblock.png" alt="Curvature correlation matrix with attention-FFN cross block" data-full="./assets/fig_Hblock.png" loading="lazy">
-          <figcaption>Figure. The estimated curvature correlation — the attention↔FFN cross-block (mean 0.086) is real and substantial, not noise.</figcaption>
+          <img src="./assets/fig_same_budget.png" alt="Predicted vs measured set risk, entire pool and solver neighborhood" data-full="./assets/fig_same_budget.png" loading="lazy">
+          <figcaption>Figure. The single-unit Gram surrogate predicts true <em>set</em> risk: across the candidate pool the predicted <span class="mono">½sᵀHs</span> tracks measured KL at Spearman <strong>0.87</strong>, and stays informative inside the solver neighborhood.</figcaption>
         </figure>
         <figure class="card figure-card">
-          <img src="./assets/fig_edgestruct.png" alt="Edge structure of the curvature matrix" data-full="./assets/fig_edgestruct.png" loading="lazy">
-          <figcaption>Figure. Edge structure of H — the cross-module coupling that a node-only method is blind to.</figcaption>
+          <img src="./assets/fig_lambda_path.png" alt="Held-out calibration risk along the lambda path for four models" data-full="./assets/fig_lambda_path.png" loading="lazy">
+          <figcaption>Figure. Held-out calibration risk along the PSD path <span class="mono">λ∈[0,1]</span> — a clear interior minimum selects <span class="mono">λ</span> per model, <strong>without labels</strong>.</figcaption>
         </figure>
       </div>
     </section>
@@ -210,9 +218,9 @@
           <p>Matched-quality interpolation permits <strong>2.2–6.6</strong> more pruning points in 9/10 cases.</p>
         </article>
         <article class="card stat-card">
-          <h3>Recovery &amp; VLMs</h3>
-          <p>8B regains <strong>10.8</strong> Avg₁₂ at 50% after the same lightweight recovery</p>
-          <p>Leads every VLM Avg₇ block, <strong>+1.1–10.7</strong> points at 30%.</p>
+          <h3>Mechanism, not luck</h3>
+          <p>Bridge removal degrades <strong>19/20</strong> capability groups by up to <strong>23.7</strong> points</p>
+          <p>Organized within- and cross-module edges reverse real pruning decisions across 10 LLMs and 7 VLMs.</p>
         </article>
       </div>
 
@@ -238,14 +246,67 @@
 
       <div class="grid2">
         <figure class="card figure-card">
-          <img src="./assets/fig_main8b.png" alt="CoCurve vs dense vs best baseline across benchmarks" data-full="./assets/fig_main8b.png" loading="lazy">
-          <figcaption>Figure. Per-benchmark scores on Llama-3.1-8B-Instruct at 20% — CoCurve matches or leads the best baseline across capability groups.</figcaption>
+          <img src="./assets/fig_ppl_models.png" alt="WikiText-2 perplexity across pruning ratios on six LLMs" data-full="./assets/fig_ppl_models.png" loading="lazy">
+          <figcaption>Figure. WikiText-2 perplexity across pruning ratios on <strong>six LLMs (3B–70B)</strong> — CoCurve (blue) stays lowest through the moderate regime; selection-only baselines enter the shaded collapse zone.</figcaption>
         </figure>
         <figure class="card figure-card">
-          <img src="./assets/fig_pareto.png" alt="Accuracy across pruning ratios" data-full="./assets/fig_pareto.png" loading="lazy">
-          <figcaption>Figure. WikiText-2 perplexity across pruning ratios — CoCurve stays graceful through the moderate regime; selection-only methods enter a collapse zone beyond ~30%, which the lightweight recovery then extends through 50%.</figcaption>
+          <img src="./assets/fig_deployment.png" alt="Advantage across models and corpora, matched-quality frontier shift, quality-resource path" data-full="./assets/fig_deployment.png" loading="lazy">
+          <figcaption>Figure. (a) CoCurve's advantage across 6 LLMs and 3 corpora; (b) the matched-quality frontier shift (2.2–6.6 more pruning points); (c) the measured quality–resource path.</figcaption>
         </figure>
       </div>
+    </section>
+
+    <section id="recovery" class="container section">
+      <h2>Recovery · The Lead Survives Fine-Tuning</h2>
+      <div class="grid2">
+        <article class="card">
+          <h3>Better structures recover better</h3>
+          <p>
+            Selection is calibration-only, but the pruned checkpoint can be refined with the <strong>same lightweight
+            LoRA recovery</strong> given to every method. CoCurve's retained structures remain strongest all the way
+            through <strong>50%</strong> pruning: on Llama-3.1-8B the recovery raises <strong>Avg₁₂ by 10.8 points</strong>
+            and cuts selection-only perplexity from <strong>41.7–4616.9</strong> down to <strong>12.6–38.0</strong>.
+          </p>
+          <p>
+            Because CoCurve starts from a healthier subnetwork, recovery <strong>converges to a higher plateau</strong> —
+            the head start compounds rather than washing out.
+          </p>
+        </article>
+        <figure class="card figure-card">
+          <img src="./assets/fig_recovery.png" alt="Recovery trajectories across models and ratios" data-full="./assets/fig_recovery.png" loading="lazy">
+          <figcaption>Figure. Recovery trajectories under the common LoRA recipe — CoCurve-pruned checkpoints optimize to the highest quality across models and pruning ratios.</figcaption>
+        </figure>
+      </div>
+      <figure class="card figure-card">
+        <img src="./assets/fig_qe_matrix.png" alt="Quality-efficiency after recovery across four LLMs" data-full="./assets/fig_qe_matrix.png" loading="lazy">
+        <figcaption>Figure. Quality–efficiency after recovery — Avg₁₂ and WikiText perplexity against retained parameters, annotated with realized speedup, across four LLMs.</figcaption>
+      </figure>
+    </section>
+
+    <section id="vlm" class="container section">
+      <h2>Vision–Language Models</h2>
+      <div class="grid2">
+        <article class="card">
+          <h3>The same edges transfer to VLMs</h3>
+          <p>
+            CoCurve applies unchanged to the language tower of vision–language models. Across <strong>three VLMs</strong>
+            it <strong>leads every Avg₇ block</strong> along the pruning sweep, and at 30% improves over the strongest
+            external pruner by <strong>4.9, 10.7, and 1.1</strong> points respectively.
+          </p>
+          <p>
+            The cross-module coupling is not a language-only artifact — the mechanism analysis spans 7 VLMs and finds
+            the same organized edge structure.
+          </p>
+        </article>
+        <figure class="card figure-card">
+          <img src="./assets/fig_vlm_recovery.png" alt="Caption perplexity across pruning ratios on three VLMs" data-full="./assets/fig_vlm_recovery.png" loading="lazy">
+          <figcaption>Figure. Caption perplexity across pruning ratios on three VLMs — CoCurve stays lowest as sparsity grows.</figcaption>
+        </figure>
+      </div>
+      <figure class="card figure-card">
+        <img src="./assets/fig_vlm_qe.png" alt="Quality-efficiency across three VLMs" data-full="./assets/fig_vlm_qe.png" loading="lazy">
+        <figcaption>Figure. Vision–language quality–efficiency across three VLMs — CoCurve leads every Avg₇ block along the pruning sweep.</figcaption>
+      </figure>
     </section>
 
     <section id="analysis" class="container section">
@@ -273,11 +334,28 @@
             take full edges (λ=1); higher-redundancy ones (Qwen2.5-14B 0.198) damp toward the OBD diagonal.
           </p>
           <p>
-            So λ is <strong>chosen without labels</strong>, and the method degrades gracefully to a strong
-            node-saliency selector exactly where edges would not help.
+            So <span class="mono">λ</span> is <strong>chosen without labels</strong>, and the method degrades gracefully
+            to a strong node-saliency selector exactly where edges would not help.
           </p>
         </article>
       </div>
+
+      <figure class="card figure-card">
+        <img src="./assets/fig_edge_core.png" alt="Cross-module edges, node-edge mismatch, conditional rank flip, matched bridge removal" data-full="./assets/fig_edge_core.png" loading="lazy">
+        <figcaption>Figure. Edges connect structure, decisions, and behavior — (a) cross-module co-pruning edges are real; (b) node saliency mismatches edge importance; (c) conditioning flips the node-only ranking; (d) matched bridge removal degrades 19/20 capability groups by up to 23.7 points.</figcaption>
+      </figure>
+
+      <div class="grid2">
+        <figure class="card figure-card">
+          <img src="./assets/fig_edge_anatomy.png" alt="Layer-pair structure, coupling reach, module-block means" data-full="./assets/fig_edge_anatomy.png" loading="lazy">
+          <figcaption>Figure. Anatomy of <span class="mono">H</span> — (a) layer-pair structure, (b) coupling reach across layer distance, (c) attention/FFN module-block means across models.</figcaption>
+        </figure>
+        <figure class="card figure-card">
+          <img src="./assets/fig_depth_signal.png" alt="Attention and FFN saliency and coupling across depth, cross-model" data-full="./assets/fig_depth_signal.png" loading="lazy">
+          <figcaption>Figure. Individual saliency and aggregate coupling for attention and FFN across normalized depth, ranked within model and type — organized, cross-model structure a node-only score is blind to.</figcaption>
+        </figure>
+      </div>
+
       <div class="grid2">
         <article class="card">
           <h3>Ablation — Llama-3.1-8B-Instruct (WikiText ↓ / Avg₁₂ ↑)</h3>
@@ -296,14 +374,14 @@
           <p class="note">Module choice matters too: on Falcon3-7B, attention-only pruning collapses (WikiText 851) while FFN-only stays at 7.07 — CoCurve's shared budget trades across modules automatically.</p>
         </article>
         <figure class="card figure-card">
-          <img src="./assets/fig_edgecorr.png" alt="FFN redundancy vs edge benefit" data-full="./assets/fig_edgecorr.png" loading="lazy">
-          <figcaption>Figure. The a-priori rule: edge benefit tracks FFN redundancy, measured from calibration alone across ten models.</figcaption>
+          <img src="./assets/fig_allocation.png" alt="Per-layer attention vs FFN budget allocation" data-full="./assets/fig_allocation.png" loading="lazy">
+          <figcaption>Figure. The per-layer attention-vs-FFN budget CoCurve allocates directly from the shared objective — early-attention removals are selected only sparingly.</figcaption>
         </figure>
       </div>
     </section>
 
     <section id="efficiency" class="container section">
-      <h2>Efficiency & Scope</h2>
+      <h2>Efficiency &amp; Calibration</h2>
       <div class="grid2">
         <article class="card">
           <h3>Real removal — accuracy at a given speedup</h3>
@@ -319,9 +397,19 @@
           <ul>
             <li>Fully evaluated across <strong>6 LLMs (3B–70B)</strong> and <strong>3 VLMs</strong>. Without recovery, selection-only methods degrade super-linearly beyond ~30%, so CoCurve targets <strong>moderate</strong> compression.</li>
             <li>A <strong>lightweight LoRA recovery</strong> extends the lead through 50% pruning — the 8B checkpoint regains <strong>10.8</strong> Avg₁₂ points.</li>
-            <li>The edge bonus is architecture-dependent; on high-redundancy families it damps to a strong OBD diagonal — a graceful fallback, not a failure. λ is selected from calibration risk alone, without labels.</li>
+            <li>The edge bonus is architecture-dependent; on high-redundancy families it damps to a strong OBD diagonal — a graceful fallback, not a failure.</li>
           </ul>
         </article>
+      </div>
+      <div class="grid2">
+        <figure class="card figure-card">
+          <img src="./assets/fig_calib_budget.png" alt="Mask overlap with full budget vs calibration sequences" data-full="./assets/fig_calib_budget.png" loading="lazy">
+          <figcaption>Figure. Selected masks stabilize with calibration size — by 64 sequences the mask overlaps the full-budget mask by <strong>+0.13</strong> on average.</figcaption>
+        </figure>
+        <figure class="card figure-card">
+          <img src="./assets/fig_calib_quality.png" alt="Perplexity and average accuracy across calibration sizes" data-full="./assets/fig_calib_quality.png" loading="lazy">
+          <figcaption>Figure. Quality is essentially flat across calibration sizes from 16–128 sequences — CoCurve needs only a small, cheap calibration set.</figcaption>
+        </figure>
       </div>
     </section>
 
