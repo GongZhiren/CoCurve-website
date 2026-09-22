@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CoCurve | Project Website</title>
-  <meta name="description" content="CoCurve: Cross-Module Co-Pruning Curvature for training-free structured LLM pruning — prune the edges between units, not just the nodes.">
+  <meta name="description" content="CoCurve: Cross-Module Co-Pruning Curvature for structured LLM pruning — prune the edges between units, not just the nodes.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
@@ -34,47 +34,50 @@
   <main id="top">
     <section class="hero container">
       <div class="hero-copy">
-        <p class="pill">Preprint · Training-Free Structured Pruning</p>
+        <p class="pill">Preprint · Cross-Module Structured Pruning</p>
         <h1>CoCurve</h1>
         <p class="subtitle">
-          Cross-Module Co-Pruning Curvature: a calibration-only, fine-tuning-free method that prunes
+          Cross-Module Co-Pruning Curvature: a calibration-only method that prunes
           attention and FFN units <strong>jointly</strong> — by preserving the <em>curvature of the edges
           between units</em>, not just ranking the nodes.
         </p>
         <div class="author-hero">
           <p class="author-hero-names">
-            Zhiren Gong<sup>1,2</sup>, Zihao Zeng<sup>1</sup>, Zijie Wang<sup>1</sup>,
-            Chau Yuen<sup>3</sup>, Wei Yang Bryan Lim<sup>1</sup>
+            Zhiren Gong<sup>1,2</sup>, Zihao Zeng<sup>1</sup>, Tiantong Wang<sup>1</sup>, Yixin Wang<sup>1</sup>, Honoka Anada<sup>1,4</sup>,
+            Zijie Wang<sup>1</sup>, Ming Xiao<sup>5</sup>, Chau Yuen<sup>3</sup>, Wei Yang Bryan Lim<sup>1</sup>
           </p>
           <p class="author-hero-affils">
             <span><sup>1</sup> College of Computing and Data Science, Nanyang Technological University</span>
             <span><sup>2</sup> Interdisciplinary Graduate Programme, Nanyang Technological University</span>
             <span><sup>3</sup> School of Electrical and Electronic Engineering, Nanyang Technological University</span>
+            <span><sup>4</sup> Department of Computer Science, The University of Tokyo</span>
+            <span><sup>5</sup> Information Science &amp; Engineering, KTH Royal Institute of Technology</span>
           </p>
         </div>
         <p class="hero-highlight">
-          On the instruction-tuned Llama-3.1-8B at 20%, CoCurve is the <strong>only</strong> training-free method
-          strong across <strong>every</strong> capability class — and best preserves the fragile code ability others
-          sacrifice. The catch everyone misses: <strong>~98%</strong> of the curvature mass lives in the edges.
+          Across <strong>6 LLMs (3B–70B)</strong> and <strong>3 VLMs</strong>, CoCurve ranks first in
+          <strong>53/60</strong> corpus comparisons (<strong>15/15 at 70B</strong>), and after the same lightweight
+          recovery its structures stay strongest through <strong>50%</strong> pruning. The catch everyone misses:
+          the decisive curvature lives in the <strong>attention↔FFN edges</strong>, not the nodes.
         </p>
         <div class="cta">
           <a class="btn btn-soft" href="https://arxiv.org/abs/2607.17568" target="_blank" rel="noreferrer">Paper</a>
-          <span class="btn btn-soft" style="opacity:.6;cursor:default">Code · coming soon</span>
+          <a class="btn btn-soft" href="https://github.com/GongZhiren/CoCurve" target="_blank" rel="noreferrer">Code</a>
           <a class="btn" href="tutorial.html">▶ Tutorial</a>
         </div>
       </div>
       <figure class="card figure-card hero-figure">
-        <img class="hero-radar-img" src="./assets/fig_teaser.png" alt="Fraction of dense retained: CoCurve vs best baseline across capability classes" data-full="./assets/fig_teaser.png" loading="eager">
-        <figcaption>Figure. Fraction of dense capability retained on Llama-3.1-8B-Instruct at 20% — CoCurve leads every class, and most on code.</figcaption>
+        <img class="hero-radar-img" src="./assets/fig_headline.png" alt="Quality–deployment frontier on Llama-3.1-8B-Instruct: Avg12 vs pruning ratio, with memory and prefill speedup" data-full="./assets/fig_headline.png" loading="eager">
+        <figcaption>Figure. CoCurve advances the quality–deployment frontier on Llama-3.1-8B-Instruct — highest Avg₁₂ at every ratio, with prefill up to 1.58× and peak memory down to 0.59× dense.</figcaption>
       </figure>
     </section>
 
     <section class="container metrics">
-      <article><h3>4 + 24B</h3><p>Models (3B–8B) + a larger-scale point</p></article>
-      <article><h3>14 tasks · 5 families</h3><p>LM · commonsense · knowledge · math · code</p></article>
-      <article><h3>~98%</h3><p>Of curvature mass is off-diagonal (edges)</p></article>
+      <article><h3>6 LLMs · 3 VLMs</h3><p>3B–70B, including a 70B 10–50% sweep</p></article>
+      <article><h3>12 tasks + 7 MM</h3><p>3 perplexity corpora · 12 language · 7 multimodal</p></article>
+      <article><h3>53/60</h3><p>Corpus comparisons ranked first (15/15 at 70B)</p></article>
       <article><h3>M ablations</h3><p>Full edge matrix, no pairwise sweeps</p></article>
-      <article><h3>0 fine-tuning</h3><p>Calibration-only · one shot</p></article>
+      <article><h3>1.58× · −41%</h3><p>Prefill throughput / peak memory at 50%</p></article>
     </section>
 
     <section id="abstract" class="container section">
@@ -159,7 +162,7 @@
           <li>In the Fisher metric, <span class="mono">H = (1/P)·D̄ᵀD̄</span> is a <strong>Gram product</strong> of single-unit ablation features.</li>
           <li>So the full <span class="mono">M×M</span> edge matrix comes from <strong>M single-unit ablations</strong> — no O(M²) pairwise sweeps, no gradients, no labels.</li>
           <li>A one-shot <strong>O(MK)</strong> cost-normalized greedy solves a shared attention+FFN budget, so per-type ratios emerge from the objective.</li>
-          <li>A calibration-selected <strong>trust-region λ</strong> interpolates diagonal-only (λ=0, an OBD floor) to full edges (λ=1); an optional gated compensation is reported transparently and never degrades the result.</li>
+          <li>A calibration-selected <strong>λ ∈ [0,1]</strong> traces a positive-semidefinite path from diagonal-only (λ=0, an OBD floor) to the full co-pruning graph (λ=1); every intermediate matrix stays PSD, so λ indexes candidate masks rather than interaction magnitude.</li>
         </ul>
       </article>
 
@@ -176,8 +179,8 @@
         </article>
         <article class="card">
           <h3>Step 3 · Prune once</h3>
-          <p>Cost-normalized greedy under a shared budget, trust-region λ from calibration risk; physically remove units.</p>
-          <p class="note">Result: a jointly-pruned subnetwork, mask-equals-physical to &lt;10⁻³.</p>
+          <p>Cost-normalized greedy under a shared budget, λ selected from calibration risk; physically remove units.</p>
+          <p class="note">Result: a jointly-pruned subnetwork — physical slicing is bit-identical to masking.</p>
         </article>
       </div>
 
@@ -198,45 +201,36 @@
       <div class="grid3">
         <article class="card stat-card">
           <h3>Llama-3.1-8B · 20%</h3>
-          <p><strong>12.91</strong> Wiki · <strong>.610</strong> Cmn · <strong>.389</strong> MMLU · <strong>.091</strong> Code</p>
-          <p>The only method strong across every capability class (dense 6.40 / .699 / .478 / .583).</p>
+          <p><strong>56.0</strong> Avg₁₂ vs 54.5 best baseline (dense 65.2) · Wiki <strong>12.9</strong></p>
+          <p>Leads all 8 Avg₁₂ blocks on the 8B/24B models from 20–50%.</p>
         </article>
         <article class="card stat-card">
-          <h3>Code is preserved</h3>
-          <p>16% of dense code retained vs 11% for the best baseline</p>
-          <p>CoCurve best preserves the fragile code-generation ability other training-free methods sacrifice.</p>
+          <h3>First in 53/60 corpora</h3>
+          <p>Across 6 LLMs (3B–70B) — <strong>15/15</strong> at 70B</p>
+          <p>Matched-quality interpolation permits <strong>2.2–6.6</strong> more pruning points in 9/10 cases.</p>
         </article>
         <article class="card stat-card">
-          <h3>Perplexity everywhere</h3>
-          <p>Leads WikiText perplexity on <strong>every</strong> model tested</p>
-          <p>Up to <strong>14.5×</strong> lower than the best baseline at 40% on Mistral-Small-24B.</p>
+          <h3>Recovery &amp; VLMs</h3>
+          <p>8B regains <strong>10.8</strong> Avg₁₂ at 50% after the same lightweight recovery</p>
+          <p>Leads every VLM Avg₇ block, <strong>+1.1–10.7</strong> points at 30%.</p>
         </article>
       </div>
 
       <article class="card full-width-table-card">
-        <h3>Main Table — 20% Structured Pruning (Wiki ↓ / Commonsense ↑ / MMLU ↑ / Code ↑)</h3>
-        <p class="scroll-hint">Hint: scroll horizontally to view all columns on smaller screens.</p>
+        <h3>Main Table — 20% Structured Pruning (WikiText ↓ · task-group accuracy % ↑ · Avg₁₂ ↑)</h3>
+        <p class="scroll-hint">Hint: scroll horizontally to view all columns on smaller screens. Cmn₄ = commonsense (4 tasks), Sci₃ = science QA (3), Read₄ = reading (4), MMLU = knowledge (1). Best baseline = LLM-Pruner.</p>
         <div class="table-scroll">
           <table class="wide-table compact">
             <thead>
-              <tr><th>Model</th><th>Method</th><th>Wiki ↓</th><th>Cmn ↑</th><th>MMLU ↑</th><th>Code ↑</th></tr>
+              <tr><th>Model</th><th>Method</th><th>Wiki ↓</th><th>Cmn₄ ↑</th><th>Sci₃ ↑</th><th>Read₄ ↑</th><th>MMLU ↑</th><th>Avg₁₂ ↑</th></tr>
             </thead>
             <tbody>
-              <tr><td>Llama-3.1-8B-Instruct</td><td>Dense</td><td>6.40</td><td>.699</td><td>.478</td><td>.583</td></tr>
-              <tr><td></td><td>Best baseline</td><td>13.23</td><td>.586</td><td>.379</td><td>.072</td></tr>
-              <tr><td></td><td><strong>CoCurve</strong></td><td><strong>12.91</strong></td><td><strong>.610</strong></td><td><strong>.389</strong></td><td><strong>.091</strong></td></tr>
-              <tr><td>Mistral-7B</td><td>Dense</td><td>4.78</td><td>.675</td><td>.441</td><td>.322</td></tr>
-              <tr><td></td><td>Best baseline</td><td>8.11</td><td>.607</td><td>.367</td><td>.095</td></tr>
-              <tr><td></td><td><strong>CoCurve</strong></td><td><strong>8.10</strong></td><td>.605</td><td><strong>.374</strong></td><td>.079</td></tr>
-              <tr><td>Llama-3.2-3B</td><td>Dense</td><td>6.91</td><td>.628</td><td>.418</td><td>.323</td></tr>
-              <tr><td></td><td>Best baseline</td><td>16.90</td><td>.518</td><td>.335</td><td>.024</td></tr>
-              <tr><td></td><td><strong>CoCurve</strong></td><td><strong>16.71</strong></td><td>.512</td><td>.325</td><td><strong>.046</strong></td></tr>
-              <tr><td>Falcon3-7B</td><td>Dense</td><td>5.43</td><td>.670</td><td>.452</td><td>.532</td></tr>
-              <tr><td></td><td>Best baseline</td><td>7.43</td><td>.591</td><td>.398</td><td>.157</td></tr>
-              <tr><td></td><td><strong>CoCurve</strong> (λ=.5)</td><td><strong>7.03</strong></td><td><strong>.602</strong></td><td>.390</td><td><strong>.188</strong></td></tr>
-              <tr><td>Mistral-Small-24B</td><td>Dense</td><td>4.70</td><td>.738</td><td>.523</td><td>.475</td></tr>
-              <tr><td></td><td>Best baseline</td><td>10.42</td><td>.629</td><td>.446</td><td>.138</td></tr>
-              <tr><td></td><td><strong>CoCurve</strong> (λ=1)</td><td><strong>8.31</strong></td><td><strong>.648</strong></td><td><strong>.462</strong></td><td><strong>.215</strong></td></tr>
+              <tr><td>Llama-3.1-8B-Instruct</td><td>Dense</td><td>6.4</td><td>70.9</td><td>60.1</td><td>67.6</td><td>47.8</td><td>65.2</td></tr>
+              <tr><td></td><td>Best baseline</td><td>13.2</td><td>62.2</td><td>44.8</td><td>58.5</td><td>36.8</td><td>54.5</td></tr>
+              <tr><td></td><td><strong>CoCurve</strong></td><td><strong>12.9</strong></td><td><strong>63.7</strong></td><td><strong>48.0</strong></td><td><strong>58.6</strong></td><td><strong>38.5</strong></td><td><strong>56.0</strong></td></tr>
+              <tr><td>Mistral-Small-24B</td><td>Dense</td><td>4.7</td><td>73.5</td><td>63.4</td><td>65.9</td><td>52.3</td><td>66.7</td></tr>
+              <tr><td></td><td>Best baseline</td><td>25.8</td><td>65.5</td><td>55.2</td><td>59.8</td><td>43.7</td><td>59.2</td></tr>
+              <tr><td></td><td><strong>CoCurve</strong></td><td><strong>9.0</strong></td><td><strong>67.8</strong></td><td><strong>56.3</strong></td><td><strong>60.9</strong></td><td>43.5</td><td><strong>60.6</strong></td></tr>
             </tbody>
           </table>
         </div>
@@ -245,11 +239,11 @@
       <div class="grid2">
         <figure class="card figure-card">
           <img src="./assets/fig_main8b.png" alt="CoCurve vs dense vs best baseline across benchmarks" data-full="./assets/fig_main8b.png" loading="lazy">
-          <figcaption>Figure. Per-benchmark scores on Llama-3.1-8B-Instruct at 20% — CoCurve matches or leads the best baseline everywhere, widening on code.</figcaption>
+          <figcaption>Figure. Per-benchmark scores on Llama-3.1-8B-Instruct at 20% — CoCurve matches or leads the best baseline across capability groups.</figcaption>
         </figure>
         <figure class="card figure-card">
           <img src="./assets/fig_pareto.png" alt="Accuracy across pruning ratios" data-full="./assets/fig_pareto.png" loading="lazy">
-          <figcaption>Figure. CoCurve from 10–40% — graceful through the moderate regime; all training-free methods enter a collapse zone beyond ~30%.</figcaption>
+          <figcaption>Figure. WikiText-2 perplexity across pruning ratios — CoCurve stays graceful through the moderate regime; selection-only methods enter a collapse zone beyond ~30%, which the lightweight recovery then extends through 50%.</figcaption>
         </figure>
       </div>
     </section>
@@ -260,43 +254,46 @@
         <article class="card">
           <h3>The cross-module edge is the ingredient</h3>
           <p>
-            On Mistral-7B at 20%, a diagonal-only variant (node saliency alone) reaches <strong>13.3</strong> perplexity;
-            adding the edges cuts the gap to dense roughly in half, to <strong>8.1</strong> (dense 4.8) — and lifts code
-            (MBPP) from <strong>0.6%</strong> to <strong>12.2%</strong>, about 20×.
+            On Llama-3.1-8B-Instruct at 20%, a diagonal-only variant (node saliency alone) reaches <strong>13.1</strong>
+            perplexity; adding the co-pruning edges lowers it to <strong>12.9</strong> and lifts <strong>Avg₁₂ by +2.0</strong>
+            points. At 30% the gap widens — diagonal-only <strong>26.0</strong> → CoCurve <strong>21.6</strong>.
           </p>
           <p>
-            Tellingly, keeping only <em>within-module</em> edges (15.0) is <strong>worse than pure diagonal</strong> (13.1):
-            it is specifically the <strong>attention↔FFN</strong> cross-block that is load-bearing.
+            It is specifically the <strong>attention↔FFN</strong> cross-block that is load-bearing: across five language
+            models the mean attention–FFN edge magnitude is <strong>0.74–0.98×</strong> the within-module mean, and matched
+            low-saliency, high-coupling (“bridge”) removals degrade <strong>19/20</strong> capability groups by up to
+            <strong>23.7</strong> points.
           </p>
         </article>
         <article class="card">
           <h3>An a-priori rule for when edges help</h3>
           <p>
             The edge bonus grows as FFN channels become <strong>less redundant</strong> — a quantity read from the
-            calibration matrix alone, before any benchmark. Low-redundancy models (Falcon3 0.028, Llama-3.1-8B 0.074)
-            take full edges (λ=1); high-redundancy ones (Qwen2.5-32B 0.242) damp toward the OBD diagonal.
+            calibration matrix alone, before any benchmark. Low-redundancy models (Falcon3-7B 0.028, Llama-3.1-8B 0.074)
+            take full edges (λ=1); higher-redundancy ones (Qwen2.5-14B 0.198) damp toward the OBD diagonal.
           </p>
           <p>
-            So the trust-region λ is <strong>chosen without labels</strong>, and the method degrades gracefully to a strong
+            So λ is <strong>chosen without labels</strong>, and the method degrades gracefully to a strong
             node-saliency selector exactly where edges would not help.
           </p>
         </article>
       </div>
       <div class="grid2">
         <article class="card">
-          <h3>Ablation — Mistral-7B, 20% (WikiText ↓ / MBPP ↑)</h3>
+          <h3>Ablation — Llama-3.1-8B-Instruct (WikiText ↓ / Avg₁₂ ↑)</h3>
           <div class="table-scroll">
             <table class="wide-table compact">
-              <thead><tr><th>Variant</th><th>Wiki ↓</th><th>MBPP ↑</th></tr></thead>
+              <thead><tr><th>Variant</th><th>ρ</th><th>Wiki ↓</th><th>Avg₁₂ ↑</th></tr></thead>
               <tbody>
-                <tr><td>Dense</td><td>4.78</td><td>—</td></tr>
-                <tr><td>Diagonal only (λ=0)</td><td>13.26</td><td>.006</td></tr>
-                <tr><td>Head-only</td><td>1526</td><td>—</td></tr>
-                <tr><td>FFN-only</td><td>9.10</td><td>.076</td></tr>
-                <tr><td><strong>Full CoCurve (λ=1)</strong></td><td><strong>8.10</strong></td><td><strong>.122</strong></td></tr>
+                <tr><td>Dense</td><td>—</td><td>6.4</td><td>65.2</td></tr>
+                <tr><td>Diagonal only (λ=0)</td><td>20%</td><td>13.1</td><td>55.1</td></tr>
+                <tr><td><strong>Full CoCurve (λ=1)</strong></td><td>20%</td><td><strong>12.9</strong></td><td><strong>56.0</strong></td></tr>
+                <tr><td>Diagonal only (λ=0)</td><td>30%</td><td>26.0</td><td>48.7</td></tr>
+                <tr><td><strong>Full CoCurve (λ=1)</strong></td><td>30%</td><td><strong>21.6</strong></td><td><strong>49.0</strong></td></tr>
               </tbody>
             </table>
           </div>
+          <p class="note">Module choice matters too: on Falcon3-7B, attention-only pruning collapses (WikiText 851) while FFN-only stays at 7.07 — CoCurve's shared budget trades across modules automatically.</p>
         </article>
         <figure class="card figure-card">
           <img src="./assets/fig_edgecorr.png" alt="FFN redundancy vs edge benefit" data-full="./assets/fig_edgecorr.png" loading="lazy">
@@ -311,18 +308,18 @@
         <article class="card">
           <h3>Real removal — accuracy at a given speedup</h3>
           <ul>
-            <li>At 20% CoCurve physically removes ~17% of non-embedding parameters: peak memory <strong>0.83×</strong>, prefill <strong>~1.15×</strong> faster.</li>
-            <li>Across nine training-free methods the prefill speedup band is a narrow <strong>1.15–1.19×</strong> — governed by the removed parameter fraction, essentially <em>method-independent</em>.</li>
-            <li>So the real discriminator is not throughput but <strong>accuracy at a given speedup</strong> — where CoCurve wins.</li>
-            <li>Every reported speedup reflects <strong>real</strong> physical removal, validated mask-equals-physical to &lt;10⁻³.</li>
+            <li>Physical slicing yields real speedups that grow with the budget: on Llama-3.1-8B-Instruct prefill rises <strong>1.21× → 1.58×</strong> and peak memory falls to <strong>0.83× → 0.59×</strong> dense as ρ goes 20% → 50%.</li>
+            <li>At 20% across 3B–12B: prefill <strong>+17–21%</strong>, peak memory <strong>−16–17%</strong>, decode within 5% (up to +9%).</li>
+            <li>The prefill band across matched-mask methods is narrow (<strong>1.167–1.233×</strong> at 20%), governed by the removed-parameter fraction — essentially <em>method-independent</em>. So the real discriminator is <strong>accuracy at a given speedup</strong>, where CoCurve wins.</li>
+            <li>Every reported speedup reflects <strong>real</strong> physical removal — slicing is <strong>bit-identical</strong> to masking, verified on held-out batches.</li>
           </ul>
         </article>
         <article class="card">
           <h3>Honest scope</h3>
           <ul>
-            <li>Without a recovery stage, all training-free methods degrade super-linearly beyond ~30% — CoCurve's sweet spot is <strong>moderate</strong> compression.</li>
-            <li>The edge bonus is architecture-dependent; on high-redundancy families it damps to a strong OBD diagonal (a graceful fallback, not a failure).</li>
-            <li>Fully-evaluated models span 3–10B; <strong>Mistral-Small-24B</strong> is a larger-scale point (dense &amp; CoCurve final; some baselines completing). MoE is out of scope.</li>
+            <li>Fully evaluated across <strong>6 LLMs (3B–70B)</strong> and <strong>3 VLMs</strong>. Without recovery, selection-only methods degrade super-linearly beyond ~30%, so CoCurve targets <strong>moderate</strong> compression.</li>
+            <li>A <strong>lightweight LoRA recovery</strong> extends the lead through 50% pruning — the 8B checkpoint regains <strong>10.8</strong> Avg₁₂ points.</li>
+            <li>The edge bonus is architecture-dependent; on high-redundancy families it damps to a strong OBD diagonal — a graceful fallback, not a failure. λ is selected from calibration risk alone, without labels.</li>
           </ul>
         </article>
       </div>
@@ -337,7 +334,7 @@
         </article>
         <article class="card resource-card">
           <h3>Code</h3>
-          <p>Reference implementation and reproduction. <strong>Coming soon.</strong></p>
+          <p>Reference implementation and one-command reproduction on <a href="https://github.com/GongZhiren/CoCurve" target="_blank" rel="noreferrer">GitHub</a>.</p>
         </article>
         <article class="card resource-card">
           <h3>Tutorial</h3>
