@@ -153,6 +153,57 @@
 
     <section id="method" class="container section">
       <h2>Method</h2>
+
+      <style>
+      .ccv{padding:20px 22px;margin:2px 0 24px}
+      .ccv-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+      .ccv-badge{font:700 11.5px/1 Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:#07202f;
+        background:linear-gradient(120deg,var(--cyan,#37d7ff),var(--mint,#37efc7));padding:6px 13px;border-radius:999px}
+      .ccv-sub{color:var(--ink-soft,#9fb2cc);font-size:14px}
+      .ccv-body{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center}
+      @media(max-width:780px){.ccv-body{grid-template-columns:1fr}}
+      .ccv-mwrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+      .ccv-matrix{display:grid;gap:3px;background:var(--line,rgba(123,167,224,.26));padding:6px;border-radius:12px}
+      .ccv-cell{width:17px;height:17px;border-radius:3px;background:#12263e;transition:background .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}
+      .ccv-mlab{font:600 11px/1 'JBMono',ui-monospace,monospace;color:var(--ink-soft,#9fb2cc)}
+      .ccv-right{display:flex;flex-direction:column;gap:16px}
+      .ccv-step{display:flex;gap:11px;align-items:flex-start;opacity:.4;transition:opacity .4s}
+      .ccv-step.on{opacity:1}
+      .ccv-step .dot{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+        font:700 12px/1 Inter;background:#30507a;color:#cfe4ff}
+      .ccv-step.on .dot{background:linear-gradient(120deg,var(--cyan,#37d7ff),var(--mint,#37efc7));color:#07202f}
+      .ccv-step b{color:#eaf3ff;font-weight:700}
+      .ccv-step p{margin:2px 0 0;font-size:13.5px;color:var(--ink-soft,#9fb2cc);line-height:1.5}
+      .ccv-mass{margin-top:4px}
+      .ccv-massbar{height:30px;border-radius:9px;overflow:hidden;display:flex;border:1px solid var(--line,rgba(123,167,224,.26))}
+      .ccv-massbar .nodes{background:linear-gradient(90deg,#2b8fb0,var(--cyan,#37d7ff));width:0;transition:width 1s cubic-bezier(.2,.7,.2,1);display:grid;place-items:center;font:700 12px/1 Inter;color:#07202f}
+      .ccv-massbar .edges{background:linear-gradient(90deg,#b98a2e,#ffd479);width:0;transition:width 1s cubic-bezier(.2,.7,.2,1);display:grid;place-items:center;font:700 12px/1 Inter;color:#3a2a06}
+      .ccv-legend{display:flex;gap:18px;font-size:12.5px;color:var(--ink-soft,#9fb2cc);margin-top:9px}
+      .ccv-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+      .ccv-cap{margin:16px 2px 0;color:var(--ink-soft,#9fb2cc);font-size:13.5px;line-height:1.6}
+      .ccv-cap b{color:#eaf3ff}
+      </style>
+      <figure class="card figure-card ccv" aria-label="Live demonstration of the CoCurve co-pruning matrix">
+        <div class="ccv-head"><span class="ccv-badge">CoCurve · live</span>
+          <span class="ccv-sub">one matrix, two readings — <b style="color:var(--cyan,#37d7ff)">nodes</b> on the diagonal, cross-module <b style="color:#ffd479">edges</b> off it</span></div>
+        <div class="ccv-body">
+          <div class="ccv-mwrap">
+            <div class="ccv-matrix" id="ccvMatrix"></div>
+            <div class="ccv-mlab" id="ccvMlab">co-pruning matrix&nbsp; H</div>
+          </div>
+          <div class="ccv-right">
+            <div class="ccv-step" id="ccvS0"><span class="dot">1</span><div><b>Score each unit alone.</b><p>Only the diagonal — classical saliency. A clean recipe that hides one wrong assumption: damage isn't additive.</p></div></div>
+            <div class="ccv-step" id="ccvS1"><span class="dot">2</span><div><b>Recover every edge from M probes.</b><p>The whole off-diagonal is a Gram product <span class="mono">H = F·Fᵀ</span> of single-unit responses — no pairwise sweeps, gradients, or labels.</p></div></div>
+            <div class="ccv-step" id="ccvS2"><span class="dot">3</span><div><b>The edges carry the model.</b><p>Cross-module attn↔FFN coupling holds most of the decisive curvature — prune it jointly, not unit by unit.</p></div></div>
+            <div class="ccv-mass">
+              <div class="ccv-massbar"><span class="nodes" id="ccvNodes"></span><span class="edges" id="ccvEdges"></span></div>
+              <div class="ccv-legend"><span><i style="background:#37d7ff"></i>node saliency (diagonal)</span><span><i style="background:#ffd479"></i>cross-module edges (off-diagonal)</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="ccv-cap">Score units in isolation and you delete <b>bridge units</b> with everything they held up. CoCurve reads both diagonal and edges from <b>one matrix</b>, recovers the edges cheaply, and prunes them <b>together</b>.</p>
+      </figure>
+
       <figure class="card figure-card">
         <img src="./assets/fig_overview.png" alt="CoCurve overview: single-unit probing, co-pruning matrix H, H-conditioned pruning" data-full="./assets/fig_overview.png" loading="lazy">
         <figcaption>Figure. CoCurve, end to end — probe each unit once (single-unit responses), assemble the co-pruning matrix <span class="mono">H</span> (diagonal saliency + off-diagonal edges), then prune conditioned on <span class="mono">H</span>.</figcaption>
@@ -472,6 +523,50 @@
     <img id="lightboxImg" src="" alt="Expanded figure preview">
   </div>
 
+  <script>
+  /* CoCurve live: the co-pruning matrix fills in — diagonal node saliency (cyan),
+     then cross-module edges from M single-unit probes (gold), then the mass split. */
+  (function(){
+    var mx=document.getElementById('ccvMatrix'); if(!mx) return;
+    var M=12, cells=[];
+    mx.style.gridTemplateColumns='repeat('+M+',17px)';
+    function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+    var rnd=mulberry(7);
+    var edge=[]; // off-diagonal intensity, stronger in attn<->FFN cross blocks
+    for(var r=0;r<M;r++)for(var c=0;c<M;c++){
+      var cross=((r<6)!==(c<6))?1:0.45;          // cross-module quadrants brighter
+      edge.push(r===c?0:Math.pow(rnd(),1.7)*cross);
+      var d=document.createElement('div'); d.className='ccv-cell'; mx.appendChild(d); cells.push(d);
+    }
+    var steps=[document.getElementById('ccvS0'),document.getElementById('ccvS1'),document.getElementById('ccvS2')];
+    var nodesBar=document.getElementById('ccvNodes'), edgesBar=document.getElementById('ccvEdges');
+    function diag(on){ for(var r=0;r<M;r++){var i=r*M+r;
+      cells[i].style.background=on?'rgba(55,215,255,.95)':'#12263e';
+      cells[i].style.boxShadow=on?'0 0 7px rgba(55,215,255,.55)':'none';} }
+    function edges(on){ for(var n=0;n<cells.length;n++){ var r=(n/M)|0,c=n%M; if(r===c)continue;
+      var v=on?edge[n]:0; cells[n].style.background='rgba(255,212,121,'+(0.05+v*0.9).toFixed(3)+')'; } }
+    function setStep(k){ steps.forEach(function(s,i){ if(s) s.classList.toggle('on',i===k); }); }
+    var reduce=false; try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+    function mass(on){ nodesBar.style.width=on?'32%':'0'; edgesBar.style.width=on?'68%':'0';
+      nodesBar.textContent=on?'nodes 32%':''; edgesBar.textContent=on?'cross-module edges 68%':''; }
+    function reset(){ diag(false); edges(false); mass(false); }
+    function run(){
+      reset(); setStep(0); diag(true);
+      var t=[];
+      t.push(setTimeout(function(){ setStep(1); edges(true); },1700));
+      t.push(setTimeout(function(){ setStep(2); mass(true); },3700));
+      t.push(setTimeout(run,7200));
+      return t;
+    }
+    if(reduce){ diag(true); edges(true); mass(true); setStep(2); return; }
+    var started=false;
+    function start(){ if(started)return; started=true; run(); }
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting){start();io.disconnect();}});},{threshold:.3});
+      io.observe(mx);
+    } else start();
+  })();
+  </script>
   <script src="./script.js"></script>
   <script src="./enhance.js"></script>
 </body>
