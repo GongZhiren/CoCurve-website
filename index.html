@@ -191,6 +191,12 @@
       .ccv-mlab{font:600 11px/1.4 JBMono,monospace;color:var(--ink-soft,#9fb2cc);text-align:center}
       .ccv-cap{margin:16px 2px 0;color:var(--ink-soft,#9fb2cc);font-size:13.5px;line-height:1.6}
       .ccv-cap b{color:#eaf3ff}
+      .ccv-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+      @media(max-width:620px){.ccv-stats{grid-template-columns:1fr}}
+      .ccv-stat{border:1px solid var(--line,rgba(123,167,224,.26));border-radius:12px;padding:12px 14px;text-align:center;background:rgba(10,22,38,.4)}
+      .ccv-stat .big{font:800 20px/1.05 Inter;color:#eaf3ff;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+      .ccv-stat .big .c{color:var(--cyan,#37d7ff)}.ccv-stat .big .y{color:#ffd479}
+      .ccv-stat .lab{font:600 10px/1.35 Inter;color:var(--ink-soft,#9fb2cc);margin-top:5px}
       </style>
       <figure class="card figure-card ccv" aria-label="Why cross-module edges matter, and how CoCurve recovers them">
         <div class="ccv-head"><span class="ccv-badge">CoCurve · live</span>
@@ -222,6 +228,11 @@
               <div class="ccv-mlab" id="ccvMlab">H = F&middot;Fᵀ&nbsp; — every edge from just M single-unit probes</div>
             </div>
           </div>
+        </div>
+        <div class="ccv-stats">
+          <div class="ccv-stat"><div class="big"><span class="c">M</span> probes</div><div class="lab">single-unit ablations build the whole N&times;N matrix, no pairwise sweep</div></div>
+          <div class="ccv-stat"><div class="big">every class</div><div class="lab">leads all capability classes on Llama-3.1-8B at 20% sparsity</div></div>
+          <div class="ccv-stat"><div class="big">training<span style="color:#9fb2cc">·</span>free</div><div class="lab">no gradients, no labels, no retraining of the backbone</div></div>
         </div>
         <p class="ccv-cap">The bridge gap on the left is exactly an <b style="color:#ffd479">off-diagonal entry</b> on the right. CoCurve recovers the whole edge matrix as a <b>Gram product of M single-unit ablations</b> — no pairwise sweeps, gradients, or labels — then prunes attention &amp; FFN <b>jointly</b>, never deleting a bridge with what it holds up.</p>
       </figure>
